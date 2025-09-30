@@ -19,6 +19,28 @@ in {
       description = "serialize from config";
       default = lib.kdl.serialize.nodes cfg.config;
     };
+
+    # TODO
+    systemd = {
+      enable = lib.mkEnableOption "Whether to enable {file}`sway-session.target` on niri startup";
+      variables = lib.mkOption {
+        type = with lib.types; listOf str;
+        default = [
+          "DISPLAY"
+          "WAYLAND_DISPLAY"
+          "SWAYSOCK"
+          "XDG_CURRENT_DESKTOP"
+          "XDG_SESSION_TYPE"
+          "NIXOS_OZONE_WL"
+          "XCURSOR_THEME"
+          "XCURSOR_SIZE"
+        ];
+        example = [ "--all" ];
+        description = ''
+          Environment variables imported into the systemd and D-Bus user environment.
+        '';
+      };
+    };
   };
   
   config = lib.mkIf cfg.enable {
