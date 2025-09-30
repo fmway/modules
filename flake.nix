@@ -4,5 +4,5 @@
   };
 
   outputs = { fmway-lib, self, ... } @ inputs:
-    fmway-lib.fmway.genModules' [ "nixosModules" "homeManagerModules" ] ./modules (fmway-lib // { inherit self inputs; });
+    fmway-lib.fmway.genModules [ "nixosModules" "homeManagerModules" ] ./modules (fmway-lib // { inherit self inputs; });
 }
