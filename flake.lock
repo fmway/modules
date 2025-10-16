@@ -5,11 +5,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1759228213,
-        "narHash": "sha256-kztiZFVHDi3ZYxOB/MiS3Zg46TEQ+3U+akA0ZV1G+mE=",
+        "lastModified": 1760615991,
+        "narHash": "sha256-EM1Al341h7mwn6KXCTGyKssM8WEk1vg3EwVLUNcPGec=",
         "owner": "fmway",
         "repo": "lib",
-        "rev": "80329dc1233c7c7ecb80ff93bdab1af0c1c46d95",
+        "rev": "bbdefda998b989385d2cc60ce0ebb6e9438d6e8c",
         "type": "github"
       },
       "original": {
