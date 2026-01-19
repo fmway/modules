@@ -11,9 +11,13 @@ lib.mkFlake' {
     apps.get-list-functions-for-bind = lib.fmway.stringification' {
       type = "app";
       program = pkgs.writeScript "get-list-functions-for-bind.fish" /* fish */ ''
-        #!${lib.getExe pkgs.fish}
+        #!/bin/env -S ${lib.getExe pkgs.fish} --no-config
         echo "{"
+        echo '# ======== start bind specific ======='
         bind --function-names | while read f; printf '  "%s" = "%s";\n' $f $f; end
+        echo '# ========= end bind specific ========'
+        echo
+        functions -a | string split ', ' | while read f; printf '  "%s" = "%s";\n' $f $f; end
         echo "}"
       '';
     };
