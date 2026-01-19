@@ -10,6 +10,8 @@
   mkErase = initial: mkBind ({ erase = true; } // initial);
   op = { bind' = "preset"; bind_ = "user"; bind = null; };
   modes = [ "default" "insert" "replace" "replace_one" "visual" ];
+
+  # TODO: set as type, so we don't need to add {} in last arg
   setsBind = lib.listToAttrs (lib.mapAttrsToList (name: operate: {
     inherit name;
     value = let
