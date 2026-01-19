@@ -2,7 +2,7 @@
 { config, lib, options, ... }: let
   cfg = config.programs.fish;
   opt = options.programs.fish;
-  bindOpts = lib.types.submodule ({ config, ... }: {
+  bindOpts = lib.types.submodule ({ config, name, ... }: {
     options = {
       keys = lib.mkOption {
         type = with lib.types; either str (submodule {
@@ -13,7 +13,10 @@
         });
       };
       commands = lib.mkOption {
-        type = with lib.types; listOf str;
+        type = with lib.types; listOf (coercedTo (either str attrs) (x:
+          if builtins.isAttrs x && !x?__toString then
+            abort "type ${builtins.typeOf x} isn't allowed in `programs.fish.keybindings.${name}.commands`"
+          else x) (either str attrs));
         default = [];
       };
       erase = lib.mkEnableOption "Erase mode";
@@ -59,24 +62,26 @@
     run = enable_vim;
   };
 
-  set_binds = lib.concatStringsSep "\n" (map (
-    { keys, mode, setsMode, operate, commands, ... } @ v: let
-      k  = if keys ? key then "-k ${keys.key}" else keys;
-      op = lib.optionals (!isNull operate) [ "--${operate}" ];
-      m  = lib.optionals (!isNull mode) [ "--mode" mode ];
-      m' = lib.optionals (!isNull setsMode) [ "--sets-mode" setsMode ];
-      erase = lib.concatStringsSep " " ([ "bind" k "--erase" ] ++ op ++ m ++ m');
-      insert= lib.concatStringsSep " " ([ "bind" k ] ++ op ++ m ++ m' ++ map lib.escapeShellArg commands);
-    in lib.concatStringsSep "\n" (
-      lib.optionals v.erase [erase]
-    ++lib.optionals (commands != []) [insert]
-    )
-  ) cfg.keybindings);
-  all_fn = self.lib.fish.functions // builtins.foldl' (a: c: a // { ${c} = "${c}"; }) {} (
+  toMode = { keys, mode, setsMode, operate, commands, erase, ... } @ v: let
+    k  = if keys ? key then "-k ${keys.key}" else keys;
+    op = lib.optionals (!isNull operate) [ "--${operate}" ];
+    m  = lib.optionals (!isNull mode) [ "--mode" mode ];
+    m' = lib.optionals (!isNull setsMode) [ "--sets-mode" setsMode ];
+    erase = lib.concatStringsSep " " ([ "bind" k "--erase" ] ++ op ++ m ++ m');
+    insert= lib.concatStringsSep " " ([ "bind" k ] ++ op ++ m ++ m' ++ map lib.escapeShellArg commands);
+  in lib.concatStringsSep "\n" (
+    lib.optionals v.erase [erase]
+  ++lib.optionals (commands != []) [insert]
+  );
+  set_binds = lib.concatStringsSep "\n" (map toMode cfg.keybindings);
+  all_fn = self.lib.fish.functions // builtins.listToAttrs (map (name: { inherit name; value = self.lib.fish.mkFn name; }) (
     lib.unique (
       lib.concatMap builtins.attrNames opt.functions.definitions
     )
-  );
+  ));
+  fixKeybind = x: builtins.foldl' (a: c: a // lib.optionalAttrs (x ? ${c}) {
+    ${c} = x.${c};
+  }) {} (builtins.attrNames (builtins.functionArgs toMode));
 in {
   inherit _file;
   options.programs.fish = {
@@ -84,7 +89,9 @@ in {
       description = "fish keybindings";
       type = with lib.types; coercedTo
         (either (functionTo anything) (listOf anything))
-        (x: if builtins.isFunction x then x all_fn else x)
+        (x: let
+          r = if builtins.isFunction x then x all_fn else x;
+        in if builtins.isList r then map (y: if builtins.isAttrs y then fixKeybind y else y) r else r)
         (listOf bindOpts);
       default = [];
     };

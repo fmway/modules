@@ -1,4 +1,4 @@
-{
+{ super, ... }: builtins.mapAttrs (k: _: super.mkFn k) {
 # ======== start bind specific =======
   "accept-autosuggestion" = "accept-autosuggestion";
   "and" = "and";

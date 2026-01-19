@@ -1,12 +1,14 @@
 { lib, ... }: let
-  mkBind = initial: keys: x:
-    if builtins.isAttrs x then
-      { inherit keys; } // initial // x
-    else mkBind (initial // {
-      commands = initial.commands or [] ++ lib.fmway.flat x;
-    }) keys;
-  mkAll = fn:
-    lib.fmway.listToFunction' (map fn modes);
+  mkBind = initial: keys: initial // {
+    inherit keys;
+    commands = [];
+    __functor = self: arg: self // (
+      if builtins.isAttrs arg then
+        arg
+      else {
+        commands = self.commands or [] ++ lib.fmway.flat arg;
+      });
+  };
   mkErase = initial: mkBind ({ erase = true; } // initial);
   op = { bind' = "preset"; bind_ = "user"; bind = null; };
   modes = [ "default" "insert" "replace" "replace_one" "visual" ];
@@ -25,19 +27,24 @@
       }) ([ null ] ++ modes));
     in {
       erase = mkErase i;
-      all = {
-        __functor = _: mkAll (mode: setsBind.${name}.${mode});
-        erase = mkAll (mode: setsBind.${name}.${mode}.erase);
-      };
     } // r;
   }) op);
 in setsBind // {
   /* functionality for bind */
   c = lib.listToAttrs (map (name: {
     inherit name;
-    value = x:
+    value = x: lib.warn "c.${name} is deprecated, use functions.fish_commandline_${name} instead"
       "fish_commandline_${name} \"" + x + "\"";
   }) [ "append" "prepend" ]) // /* FIXME add other commands */ {
     
   };
+  mkFn = cmd: {
+    inherit cmd;
+    args = [];
+    __functor = self: arg: self // {
+      args = self.args ++ [ arg ];
+    };
+    __toString = self: "${self.cmd} ${lib.escapeShellArgs self.args}";
+  };
+  defaultModes = modes;
 }

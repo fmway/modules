@@ -12,7 +12,7 @@ lib.mkFlake' {
       type = "app";
       program = pkgs.writeScript "get-list-functions-for-bind.fish" /* fish */ ''
         #!/bin/env -S ${lib.getExe pkgs.fish} --no-config
-        echo "{"
+        echo "{ super, ... }: builtins.mapAttrs (k: _: super.mkFn k) {"
         echo '# ======== start bind specific ======='
         bind --function-names | while read f; printf '  "%s" = "%s";\n' $f $f; end
         echo '# ========= end bind specific ========'
