@@ -1,5 +1,7 @@
-{ lib, config, ... }: let
+{ internal, self, _file, ... }:
+{ config, lib, options, ... }: let
   cfg = config.programs.fish;
+  opt = options.programs.fish;
   bindOpts = lib.types.submodule ({ config, ... }: {
     options = {
       keys = lib.mkOption {
@@ -70,11 +72,20 @@
     ++lib.optionals (commands != []) [insert]
     )
   ) cfg.keybindings);
+  all_fn = self.lib.fish.functions // builtins.foldl' (a: c: a // { ${c} = "${c}"; }) {} (
+    lib.unique (
+      lib.concatMap builtins.attrNames opt.functions.definitions
+    )
+  );
 in {
+  inherit _file;
   options.programs.fish = {
     keybindings = lib.mkOption {
       description = "fish keybindings";
-      type = lib.types.listOf bindOpts;
+      type = with lib.types; coercedTo
+        (either (functionTo anything) (listOf anything))
+        (x: if builtins.isFunction x then x all_fn else x)
+        (listOf bindOpts);
       default = [];
     };
     vim = {
