@@ -12,13 +12,13 @@ lib.mkFlake' {
       type = "app";
       program = pkgs.writeScript "get-list-functions-for-bind.fish" /* fish */ ''
         #!/bin/env -S ${lib.getExe pkgs.fish} --no-config
-        echo "{ super, ... }: builtins.mapAttrs (k: _: super.mkFn k) {"
+        echo "{ super, lib, ... }:"
+        echo "lib.flip lib.genAttrs super.mkFn ["
         echo '# ======== start bind specific ======='
-        bind --function-names | while read f; printf '  "%s" = "%s";\n' $f $f; end
+        bind --function-names | while read f; printf '  "%s"\n' $f; end
         echo '# ========= end bind specific ========'
-        echo
-        functions -a | string split ', ' | while read f; printf '  "%s" = "%s";\n' $f $f; end
-        echo "}"
+        functions -a | string split ', ' | while read f; printf '  "%s"\n' $f; end
+        echo "]"
       '';
     };
   };

@@ -3,7 +3,7 @@
     inherit keys;
     commands = [];
     __functor = self: arg: self // (
-      if builtins.isAttrs arg then
+      if builtins.isAttrs arg && !arg?__toString then
         arg
       else {
         commands = self.commands or [] ++ lib.fmway.flat arg;
@@ -42,9 +42,9 @@ in setsBind // {
     inherit cmd;
     args = [];
     __functor = self: arg: self // {
-      args = self.args ++ [ arg ];
+      args = self.args ++ lib.fmway.flat arg;
     };
-    __toString = self: "${self.cmd} ${lib.escapeShellArgs self.args}";
+    __toString = self: lib.escapeShellArgs ([self.cmd] ++ self.args);
   };
   defaultModes = modes;
 }
